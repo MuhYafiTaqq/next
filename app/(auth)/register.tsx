@@ -22,10 +22,23 @@ export default function RegisterScreen() {
   const [username, setUsername] = useState(""); // Tambahan untuk username
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(""); // Tambahkan state untuk konfirmasi password
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   async function signUpWithEmail() {
     setLoading(true);
     setErrorMsg("");
+
+    if (password !== confirmPassword) {
+      setErrorMsg("Password dan konfirmasi password tidak cocok!");
+      setLoading(false);
+      return;
+    }
+    if (!agreeToTerms) {
+      setErrorMsg("Anda harus menyetujui syarat & ketentuan!");
+      setLoading(false);
+      return;
+    }
 
     // Menggunakan supabase.auth.signUp untuk mendaftarkan pengguna baru
     const {
@@ -61,78 +74,113 @@ export default function RegisterScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-100">
-      <Stack.Screen options={{ headerShown: false }} />
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView className="flex-1 bg-bg">
+      <KeyboardAvoidingView
+        className="flex-1" // Ambil seluruh tinggi
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20} // Sesuaikan offset jika perlu
+      >
+        <View className="flex-1 px-6 pt-20 pb-8">
+          <View className="flex-row items-center mb-6">
+            <Text className="flex-1 text-center text-3xl font-bold text-primary">
+              Create Students Account
+            </Text>
+          </View>
 
-      <View className="flex justify-center mt-12">
-        <View className="flex items-center border-1 border-solid border-red-500">
-          <Image
-            source={images.login}
-            className="w-72 h-72 border-1 border-solid border-red-500"
-          />
-        </View>
+          <View className="flex-col items-center my-12">
+            <Image
+              source={images.login} // Gunakan gambar ilustrasi untuk register
+              className="w-full h-60 rounded-lg object-contain" // Atur ukuran dan gaya
+              resizeMode="contain"
+            />
+          </View>
 
-        <View className="w-4/5 my-6 mx-auto" />
-
-        <View className="flex justify-center px-10">
-          <Text className="text-3xl font-bold text-gray-800 mb-6">
-            Create Your Account
-          </Text>
-
-          {/* Form Container */}
-          <View>
+          <View className="flex-1">
             <TextInput
               className="bg-white p-4 rounded-lg mb-4 text-base border border-gray-300 focus:border-blue-500"
-              placeholder="Username Anda"
+              placeholder="Username"
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
             />
             <TextInput
               className="bg-white p-4 rounded-lg mb-4 text-base border border-gray-300 focus:border-blue-500"
-              placeholder="Email Anda"
+              placeholder="Email Address"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
             />
             <TextInput
-              className="bg-white p-4 rounded-lg mb-6 text-base border border-gray-300 focus:border-blue-500"
-              placeholder="Password"
+              className="bg-white p-4 rounded-lg mb-4 text-base border border-gray-300 focus:border-blue-500"
+              placeholder="Choose a Password"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
             />
+            <TextInput
+              className="bg-white p-4 rounded-lg mb-6 text-base border border-gray-300 focus:border-blue-500"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
 
+            <TouchableOpacity
+              className="flex-row items-center mb-6"
+              onPress={() => setAgreeToTerms(!agreeToTerms)}
+              activeOpacity={0.7}
+            >
+              <View className={`w-6 h-6 rounded border border-gray-400 justify-center items-center mr-3 ${agreeToTerms ? 'bg-primary' : 'bg-white'}`}>
+                {agreeToTerms && (
+                  <Text className="text-white text-lg font-bold">✓</Text>
+                )}
+              </View>
+              <Text className="text-gray-600">I agree with terms of use</Text>
+            </TouchableOpacity>
+
+                            {/* Tampilkan pesan error inline jika ada */}
             {errorMsg ? (
               <Text className="text-red-500 text-center mb-4">{errorMsg}</Text>
             ) : null}
 
             <TouchableOpacity
               className={`py-4 rounded-lg shadow-md ${
-                loading ? "bg-gray-400" : "bg-blue-600"
-              }`}
+                loading || !agreeToTerms ? "bg-gray-400" : "bg-blue-600 active:bg-blue-700"
+              } mb-4`} // Tombol utama, margin bottom
               onPress={signUpWithEmail}
-              disabled={loading}
+              disabled={loading || !agreeToTerms}
             >
               <Text className="text-white text-center font-bold text-lg">
-                {loading ? "Mendaftar..." : "Daftar"}
+                {loading ? "Loading..." : "Sign up"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Pemisah "or" */}
+            <View className="flex-row items-center justify-center mb-4">
+              <View className="flex-1 h-px bg-gray-300" />
+              <Text className="mx-4 text-gray-500">or</Text>
+              <View className="flex-1 h-px bg-gray-300" />
+            </View>
+
+            {/* Tombol Sign up with Google */}
+            <TouchableOpacity
+              className="py-4 bg-white border border-gray-300 rounded-lg items-center flex-row justify-center"
+              // onPress={() => console.log("Sign up with Google")} // Tambahkan fungsi Google sign-up
+              disabled={loading}
+            >
+              <Image
+                source={images.google} // Pastikan Anda memiliki images.google
+                className="w-6 h-6 mr-3"
+                resizeMode="contain"
+              />
+              <Text className="text-gray-700 text-center font-bold text-lg">
+                Sign up with Google
               </Text>
             </TouchableOpacity>
           </View>
-
-          {/* Link ke halaman Login */}
-          <View className="flex-row justify-center mt-8">
-            <Text className="text-gray-600">Sudah punya akun? </Text>
-            <Link href="/login" asChild>
-              <TouchableOpacity>
-                <Text className="text-blue-600 font-bold">Masuk di sini</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -1,10 +1,20 @@
 // app/(auth)/_layout.tsx
 
 import { Stack } from 'expo-router';
+import { StatusBar } from 'react-native';
 
 export default function AuthLayout() {
-  // Navigator Stack ini hanya untuk mengelompokkan layar login dan register.
-  // Kita sembunyikan headernya di sini agar semua layar di dalam grup (auth)
-  // secara default tidak memiliki header.
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'fade',
+        }}>
+        <Stack.Screen name="login" />
+        <Stack.Screen name="register" />
+      </Stack>
+    </>
+  )
 }

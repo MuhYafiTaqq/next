@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
   Alert,
   ListRenderItem,
-  Image
+  Image,
+  StatusBar
 } from 'react-native';
 import { Stack, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,6 +18,7 @@ import Checkbox from 'expo-checkbox';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/Auth';
 import { icons } from '@/constants/icons';
+import { images } from '@/constants/images';
 
 // Tipe untuk setiap item dalam to-do list
 interface TodoItem {
@@ -110,33 +112,41 @@ const StudyPlannerScreen = () => {
   };
 
   // Fungsi untuk mendapatkan detail dari AI
-  const handleFetchDetails = async (item: TodoItem) => {
-    if (expandedItemId === item.id) { setExpandedItemId(null); return; }
-    if (item.details) { setExpandedItemId(item.id); return; }
-    
-    setLoadingDetailsId(item.id);
-    const geminiApiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
-    const prompt = `Berikan penjelasan detail (2-3 kalimat) untuk langkah belajar: "${item.task}", dalam konteks topik "${topic}". Jangan gunakan format markdown seperti **.`;
-    const payload = { contents: [{ parts: [{ text: prompt }] }] };
+const handleFetchDetails = async (item: TodoItem) => {
+  if (expandedItemId === item.id) { setExpandedItemId(null); return; }
+  if (item.details) { setExpandedItemId(item.id); return; }
 
-    try {
-      const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      const data = await response.json();
-      const detailsText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().replace(/\*\*/g, '');
-      
-      if (detailsText) {
-        await supabase.from('study_plan_items').update({ details: detailsText }).eq('id', item.id);
-        const updatedPlan = plan.map(p => p.id === item.id ? { ...p, details: detailsText } : p);
-        setPlan(updatedPlan);
-        setExpandedItemId(item.id);
-      }
-    } catch (error) {
-      console.error("Error fetching details:", error);
-    } finally {
-      setLoadingDetailsId(null);
+  setLoadingDetailsId(item.id);
+  const geminiApiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
+  
+  // --- PROMPT YANG LEBIH BAIK DI SINI ---
+  const prompt = `Anda adalah seorang mentor belajar yang memberikan bimbingan singkat dan efektif.
+  Jelaskan secara ringkas, jelas, dan fokus pada poin-poin penting untuk langkah belajar: "${item.task}", dalam konteks topik "${topic}".
+  Berikan penjelasan dalam 2 hingga 3 kalimat yang informatif.
+  Jangan gunakan format markdown seperti **bold**, *italic*, list (*), atau simbol lainnya.`;
+  // --- AKHIR PROMPT YANG LEBIH BAIK ---
+
+  const payload = { contents: [{ parts: [{ text: prompt }] }] };
+
+  try {
+    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const data = await response.json();
+    // Menghapus markdown jika masih ada, dan juga membersihkan spasi ekstra
+    const detailsText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().replace(/\*\*/g, '').replace(/\*/g, '').replace(/^- /gm, ''); 
+    
+    if (detailsText) {
+      await supabase.from('study_plan_items').update({ details: detailsText }).eq('id', item.id);
+      const updatedPlan = plan.map(p => p.id === item.id ? { ...p, details: detailsText } : p);
+      setPlan(updatedPlan);
+      setExpandedItemId(item.id);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching details:", error);
+  } finally {
+    setLoadingDetailsId(null);
+  }
+};
   
   // Fungsi untuk menandai tugas selesai
   const toggleTodo = async (item: TodoItem) => {
@@ -163,19 +173,19 @@ const StudyPlannerScreen = () => {
   };
 
   const renderRoadmapItem: ListRenderItem<TodoItem> = ({ item }) => (
-    <View className="bg-white p-4 mx-4 my-1.5 rounded-xl shadow-sm border border-gray-100">
+    <View className="bg-green-100 p-4 min-h-20 mx-6 my-2 rounded-xl shadow-sm border border-gray-100 flex justify-center">
         <TouchableOpacity onPress={() => handleFetchDetails(item)} className="flex-row items-center">
             {/* ✅ PERBAIKAN: Gunakan 'is_completed' */}
             <Checkbox style={{ marginRight: 15 }} value={item.is_completed} onValueChange={() => toggleTodo(item)} color={item.is_completed ? '#10B981' : undefined}/>
-            <Text className={`text-base flex-1 ${item.is_completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>{item.task}</Text>
-            <Ionicons name={expandedItemId === item.id ? "chevron-up" : "chevron-down"} size={20} color="gray" />
+            <Text className={`text-lg font-bold flex-1 text-primary`}>{item.task}</Text>
+            <Ionicons name={expandedItemId === item.id ? "chevron-up" : "chevron-down"} size={20} color="gray" className='pl-5' />
         </TouchableOpacity>
         {loadingDetailsId === item.id ? (
             <ActivityIndicator style={{ marginTop: 10 }} />
         ) : (
             expandedItemId === item.id && item.details && (
-                <View className="mt-3 pt-3 border-t border-gray-100 ml-10">
-                    <Text className="text-sm text-gray-600 leading-relaxed">{item.details}</Text>
+                <View className="mt-3 pt-3 border-t border-black/20 ml-10">
+                    <Text className="text-sm text-gray-600 leading-relaxed text-justify">{item.details}</Text>
                 </View>
             )
         )}
@@ -186,11 +196,10 @@ const StudyPlannerScreen = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <Stack.Screen options={{ headerShown: false }} />
       {currentPlanId ? (
         // Tampilan Roadmap jika sudah ada rencana
         <View className="flex-1">
-          <View className="px-6 pb-4 border-b border-gray-200 bg-white">
+          <View className="px-6 py-4  bg-white">
             <View className='bg-blue-50 p-4 rounded-xl'>
               <View className="flex-row justify-between items-start">
                   <View className="flex-1">
@@ -202,7 +211,7 @@ const StudyPlannerScreen = () => {
                   </TouchableOpacity>
               </View>
               <Text className="text-base font-semibold text-gray-700 mt-4">Progress</Text>
-              <View className="w-full h-3 bg-gray-300 rounded-full overflow-hidden mt-2">
+              <View className="w-full h-3 bg-white rounded-full overflow-hidden mt-2">
                   <View className="h-full bg-blue-500 rounded-full" style={{ width: `${progress}%` }} />
               </View>
               <Text className="text-right text-sm text-gray-500 mt-1">{progress}% Selesai</Text>
@@ -213,18 +222,18 @@ const StudyPlannerScreen = () => {
       ) : (
         // Tampilan Input jika belum ada rencana
         <View className="flex-1 items-center justify-center p-6">
-          <Ionicons name="bulb-outline" size={60} color="#a1a1aa"/>
-          <Text className="text-2xl font-bold text-gray-800 my-4 text-center">AI Study Planner</Text>
+          <Image source={images.aiplanner} className='h-60' resizeMode='contain' />
+          <Text className="text-3xl font-bold text-primary my-4 text-center">Bingung belajar mulai dari mana?</Text>
           <Text className="text-base text-center text-gray-500 mb-6">Masukkan topik atau tujuan belajar Anda, dan biarkan AI menyusun roadmap langkah demi langkah untuk Anda.</Text>
           <TextInput
             placeholder="Contoh: Belajar Web Development"
             value={topic}
             onChangeText={setTopic}
-            className="w-full bg-gray-100 p-4 rounded-lg text-base mb-4 border border-gray-300"
+            className="w-full bg-gray-100 p-4 rounded-lg text-base mb-10 border border-gray-300"
           />
           <TouchableOpacity 
             onPress={handleGeneratePlan} 
-            className="bg-blue-500 w-full py-4 rounded-full items-center shadow"
+            className="bg-primary w-full py-4 rounded-lg items-center shadow"
             disabled={loading}
           >
             <Text className="text-white font-semibold text-lg">Buat Rencana Belajar</Text>

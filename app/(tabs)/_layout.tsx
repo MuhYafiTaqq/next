@@ -1,8 +1,9 @@
 import React from 'react';
-import { Image, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Pressable, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { icons } from '@/constants/icons';
+import { StackActions } from '@react-navigation/native'; // <-- Pastikan ini diimpor
 
 // Definisikan tipe untuk TabIcon props agar lebih aman
 type TabIconProps = {
@@ -28,105 +29,108 @@ const TabIcon = ({ iconName, color, focused }: TabIconProps) => {
 
 const TabLayout = () => {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarButton: ({ children, style, onPress, onLongPress, accessibilityState }: any) => (
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={onPress}
-            onLongPress={typeof onLongPress === 'function' ? onLongPress : undefined}
-            accessibilityState={accessibilityState}
-            style={[style, { backgroundColor: 'transparent' }]}
-          >
-            {children}
-          </TouchableOpacity>
-        ),
-        headerShown: false,
-        tabBarShowLabel: true, // Menyembunyikan label teks
-        tabBarActiveTintColor: '#3b82f6', // Warna biru untuk ikon aktif
-        tabBarInactiveTintColor: '#6b7280', // Warna abu-abu untuk ikon tidak aktif
-        tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopWidth: 1,
-          borderTopColor: '#e5e7eb',
-          height: 70, // Beri sedikit ruang lebih untuk estetika
-          paddingBottom: 10,
-          paddingTop: 5,
-        },
-        tabBarLabelStyle: {
-          fontSize: 14,
-          paddingTop: 10,
-          fontWeight: "bold",
-        }
-      }}
-    >
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon
-              iconName={focused ? 'home' : 'home-outline'}
-              color={color}
-              focused={focused}
-            />
+    <>
+      <Tabs
+        screenOptions={{
+          tabBarButton: ({ children, style, onPress, onLongPress, accessibilityState }: any) => (
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={onPress}
+              onLongPress={typeof onLongPress === 'function' ? onLongPress : undefined}
+              accessibilityState={accessibilityState}
+              style={[style, { backgroundColor: 'transparent' }]}
+            >
+              {children}
+            </TouchableOpacity>
           ),
+          headerShown: false,
+          tabBarShowLabel: true, // Menyembunyikan label teks
+          tabBarActiveTintColor: '#3b82f6', // Warna biru untuk ikon aktif
+          tabBarInactiveTintColor: '#6b7280', // Warna abu-abu untuk ikon tidak aktif
+          tabBarStyle: {
+            backgroundColor: '#ffffff',
+            borderTopWidth: 1,
+            borderTopColor: '#e5e7eb',
+            height: 70, // Beri sedikit ruang lebih untuk estetika
+            paddingBottom: 10,
+            paddingTop: 5,
+          },
+          tabBarLabelStyle: {
+            fontSize: 14,
+            paddingTop: 10,
+            fontWeight: "bold",
+          }
         }}
-      />
-      <Tabs.Screen
-        name="feed"
-        options={{
-          title: 'Feed',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon
-              iconName={focused ? 'newspaper' : 'newspaper-outline'}
-              color={color}
-              focused={focused}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="agenda"
-        options={{
-          title: 'Agenda',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon
-              iconName={focused ? 'calendar' : 'calendar-outline'}
-              color={color}
-              focused={focused}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="classes"
-        options={{
-          title: 'Class',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon
-              iconName={focused ? 'school' : 'school-outline'}
-              color={color}
-              focused={focused}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="study-planner"
-        options={{
-          title: 'Study Planner',
-          tabBarIcon: ({ color, focused }) => (
-            <TabIcon
-              iconName={focused ? 'trail-sign' : 'trail-sign-outline'}
-              color={color}
-              focused={focused}
-            />
-          ),
-        }}
-      />
-      
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="home"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                iconName={focused ? 'home' : 'home-outline'}
+                color={color}
+                focused={focused}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="feed"
+          options={{
+            title: 'Feed',
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                iconName={focused ? 'newspaper' : 'newspaper-outline'}
+                color={color}
+                focused={focused}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="agenda"
+          options={{
+            title: 'Agenda',
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                iconName={focused ? 'calendar' : 'calendar-outline'}
+                color={color}
+                focused={focused}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="classes"
+          options={{
+            title: 'Class',
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                iconName={focused ? 'school' : 'school-outline'}
+                color={color}
+                focused={focused}
+              />
+            ),
+          }}
+
+        />
+        <Tabs.Screen
+          name="study-planner"
+          options={{
+            title: 'Study Planner',
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                iconName={focused ? 'trail-sign' : 'trail-sign-outline'}
+                color={color}
+                focused={focused}
+              />
+            ),
+          }}
+        />
+        
+      </Tabs>
+    </>
   );
 };
 
