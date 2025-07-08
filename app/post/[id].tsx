@@ -97,8 +97,8 @@ const PostDetailScreen = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <Stack.Screen options={{ title: 'Postingan' }} />
+    <SafeAreaView className="flex-1 bg-white px-6">
+      <Stack.Screen options={{ title: 'Komentar' }} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
@@ -109,14 +109,14 @@ const PostDetailScreen = () => {
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingBottom: 50 }}
           ListHeaderComponent={
-            <View className="p-2">
+            <View className="">
               {/* ✅ DI SINI KITA MENAMBAHKAN PROP isDetailPage */}
               <PostCard post={post} onUpdate={fetchPostAndComments} isDetailPage={true} />
-              <Text className="text-lg font-bold mt-4 px-2">Komentar</Text>
+              <Text className="text-lg font-bold mt-4">Komentar</Text>
             </View>
           }
           renderItem={({ item }) => (
-            <View className="flex-row p-3 mx-4 my-1 bg-white rounded-lg shadow-sm">
+            <View className="flex-row p-3 my-1 bg-white rounded-lg shadow-sm">
               <Image 
                 source={{ uri: item.profiles.avatar_url || 'https://placehold.co/100' }} 
                 className="w-10 h-10 rounded-full bg-gray-200"
