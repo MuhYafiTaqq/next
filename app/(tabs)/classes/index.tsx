@@ -709,6 +709,7 @@ const ClassesScreen = () => {
                 Gabung Kelas
               </Text>
             </TouchableOpacity>
+            
             <CreateClassModal
               isVisible={modalBuatKelas} // Kontrol visibilitas
               onClose={() => setModalBuatKelas(false)} // Fungsi untuk menutup

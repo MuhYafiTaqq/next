@@ -76,12 +76,12 @@ const TabLayout = () => {
           }}
         />
         <Tabs.Screen
-          name="feed"
+          name="forum"
           options={{
-            title: 'Feed',
+            title: 'Forum',
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
-                iconName={focused ? 'newspaper' : 'newspaper-outline'}
+                iconName={focused ? 'chatbubbles' : 'chatbubbles-outline'}
                 color={color}
                 focused={focused}
               />
