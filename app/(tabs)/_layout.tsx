@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, StatusBar, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Pressable, StatusBar, Text, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { icons } from '@/constants/icons';
@@ -29,39 +29,38 @@ const TabIcon = ({ iconName, color, focused }: TabIconProps) => {
 
 const TabLayout = () => {
   return (
-    <>
-      <Tabs
-        screenOptions={{
-          tabBarButton: ({ children, style, onPress, onLongPress, accessibilityState }: any) => (
-            <TouchableOpacity
-              activeOpacity={1}
-              onPress={onPress}
-              onLongPress={typeof onLongPress === 'function' ? onLongPress : undefined}
-              accessibilityState={accessibilityState}
-              style={[style, { backgroundColor: 'transparent' }]}
-            >
-              {children}
-            </TouchableOpacity>
-          ),
-          headerShown: false,
-          tabBarShowLabel: true, // Menyembunyikan label teks
-          tabBarActiveTintColor: '#3b82f6', // Warna biru untuk ikon aktif
-          tabBarInactiveTintColor: '#6b7280', // Warna abu-abu untuk ikon tidak aktif
-          tabBarStyle: {
-            backgroundColor: '#ffffff',
-            borderTopWidth: 1,
-            borderTopColor: '#e5e7eb',
-            height: 70, // Beri sedikit ruang lebih untuk estetika
-            paddingBottom: 10,
-            paddingTop: 5,
-          },
-          tabBarLabelStyle: {
-            fontSize: 14,
-            paddingTop: 10,
-            fontWeight: "bold",
-          }
-        }}
-      >
+    <Tabs
+      screenOptions={{
+        tabBarButton: ({ children, style, onPress, onLongPress, accessibilityState }: any) => (
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={onPress}
+            onLongPress={typeof onLongPress === 'function' ? onLongPress : undefined}
+            accessibilityState={accessibilityState}
+            style={[style, { backgroundColor: 'transparent' }]}
+          >
+            {children}
+          </TouchableOpacity>
+        ),
+        headerShown: false,
+        tabBarShowLabel: true,
+        tabBarActiveTintColor: '#3b82f6',
+        tabBarInactiveTintColor: '#6b7280',
+        tabBarStyle: {
+          backgroundColor: '#ffffff',
+          borderTopWidth: 1,
+          borderTopColor: '#e5e7eb',
+          height: 70,
+          paddingBottom: 10,
+          paddingTop: 5,
+        },
+        tabBarLabelStyle: {
+          fontSize: 14,
+          paddingTop: 10,
+          fontWeight: "bold",
+        }
+      }}
+    >
         <Tabs.Screen
           name="home"
           options={{
@@ -113,8 +112,9 @@ const TabLayout = () => {
               />
             ),
           }}
-
+    
         />
+
         <Tabs.Screen
           name="study-planner"
           options={{
@@ -130,7 +130,6 @@ const TabLayout = () => {
         />
         
       </Tabs>
-    </>
   );
 };
 

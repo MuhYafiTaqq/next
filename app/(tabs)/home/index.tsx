@@ -117,6 +117,29 @@ export default function Index() {
                         </View>
                     </View>
                     
+                    {/* Navigation Cards */}
+                    <View className="px-6 mb-6">
+                        <Text className="text-xl font-bold mb-4">Quick Access</Text>
+                        <View className="flex-row justify-between">
+                            <TouchableOpacity 
+                                className="flex-1 bg-blue-50 p-4 rounded-xl mr-2 items-center"
+                                onPress={() => router.push('/chat')}
+                            >
+                                <Ionicons name="chatbubbles" size={32} color="#3B82F6" />
+                                <Text className="text-blue-600 font-semibold mt-2">Chat</Text>
+                                <Text className="text-blue-500 text-xs text-center">Friends & Psychologist</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                className="flex-1 bg-green-50 p-4 rounded-xl ml-2 items-center"
+                                onPress={() => router.push('/gemini-assistant')}
+                            >
+                                <Ionicons name="sparkles" size={32} color="#10B981" />
+                                <Text className="text-green-600 font-semibold mt-2">Sahabat Online</Text>
+                                <Text className="text-green-500 text-xs text-center">Teman Dengar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    
                     {/* Judul To-Do List */}
                     <View className="px-6 mb-2">
                         <Text className="text-2xl font-bold">Daftar Tugas Kuliah</Text>
@@ -130,7 +153,7 @@ export default function Index() {
             }
             onRefresh={fetchTodos}
             refreshing={loadingTodos}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={{ paddingBottom: 50 }}
         />
     </SafeAreaView>
   );

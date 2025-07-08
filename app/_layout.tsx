@@ -57,8 +57,13 @@ const InitialLayout = () => {
       {/* Daftarkan semua layar non-tab di sini */}
       <Stack.Screen name="post/[id]" options={{ title: 'Postingan' }} />
       
-      <Stack.Screen name="chat/[id]" options={{ title: 'Percakapan' }} />
+      <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="search-users" options={{ title: 'Cari Pengguna', presentation: 'modal' }} />
+      
+      <Stack.Screen 
+        name="gemini-assistant" 
+        options={{ title: 'Teman Dengar' }} 
+      />
       
     </Stack>
   );
