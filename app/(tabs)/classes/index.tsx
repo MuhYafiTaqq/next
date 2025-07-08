@@ -642,6 +642,7 @@ const ClassesScreen = () => {
                   renderItem={renderClassItem}
                   numColumns={2}
                   columnWrapperStyle={{ gap: 12 }}
+                  contentContainerStyle={{ paddingBottom: 50 }}
                   ListEmptyComponent={
                     <View className="items-center mt-10">
                       <Text>Belum ada mata kuliah.</Text>
@@ -709,7 +710,7 @@ const ClassesScreen = () => {
                 Gabung Kelas
               </Text>
             </TouchableOpacity>
-            
+
             <CreateClassModal
               isVisible={modalBuatKelas} // Kontrol visibilitas
               onClose={() => setModalBuatKelas(false)} // Fungsi untuk menutup
@@ -768,7 +769,7 @@ const ClassesScreen = () => {
                     data={dosenList}
                     keyExtractor={(item) => item.id}
                     renderItem={renderDosenItem}
-                    contentContainerStyle={{ paddingVertical: 10 }}
+                    contentContainerStyle={{ paddingVertical: 10, paddingBottom: 50 }}
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
                         <View style={{ alignItems: 'center', marginTop: 20 }}>

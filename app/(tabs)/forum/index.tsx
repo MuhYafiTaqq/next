@@ -94,6 +94,7 @@ const fetchPosts = React.useCallback(async () => { // Tetap async dan useCallbac
           renderItem={renderPostItem}
           onRefresh={fetchPosts}
           refreshing={loading}
+          contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 8, paddingBottom: 50 }}
           ListEmptyComponent={
             <View className="flex-1 justify-center items-center mt-20">
               <Text className="text-gray-500">Belum ada postingan.</Text>
