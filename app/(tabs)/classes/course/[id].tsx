@@ -20,7 +20,7 @@ import { images } from '@/constants/images';
 import Modal from 'react-native-modal';
 import CreateSessionModal from './CreateSessionModal';
 
-import EditSessionModal from '@/components/editsessionmodal';
+import EditSessionModal from '@/components/EditSessionModal';
 
 // --- Interface untuk Session (HARUS SAMA PERSIS dengan yang di SessionCard.tsx dan EditSessionModal.tsx) ---
 interface Session {

@@ -58,12 +58,17 @@ const InitialLayout = () => {
       <Stack.Screen name="post/[id]" options={{ title: 'Postingan' }} />
       <Stack.Screen name="create-post" options={{ title: 'Buat Postingan Baru', presentation: 'modal' }} />
       
-      <Stack.Screen name="chat/[id]" options={{ title: 'Percakapan' }} />
+      <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="search-users" options={{ title: 'Cari Pengguna', presentation: 'modal' }} />
 
       <Stack.Screen 
         name="add-agenda" 
         options={{ title: 'Tambah Agenda', presentation: 'modal' }} 
+      />
+      
+      <Stack.Screen 
+        name="gemini-assistant" 
+        options={{ title: 'Teman Dengar' }} 
       />
       
     </Stack>

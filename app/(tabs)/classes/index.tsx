@@ -1,30 +1,29 @@
+import { useAuth } from "@/context/Auth";
+import { supabase } from "@/lib/supabase";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Picker } from "@react-native-picker/picker";
+import * as Clipboard from "expo-clipboard";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  Alert,
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
-  ListRenderItem,
+  Alert,
+  Dimensions,
+  FlatList,
   Image,
   Linking,
-  Dimensions,
+  ListRenderItem,
+  SafeAreaView,
+  Text,
   TextInput,
-  StatusBar,
+  TouchableOpacity,
+  View
 } from "react-native";
-import React, { useState, useCallback, useEffect } from "react";
-import { Picker } from "@react-native-picker/picker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/context/Auth";
-import { useFocusEffect, useRouter, Link, Stack } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import * as Clipboard from "expo-clipboard";
 // import { icons } from "@/constants/icons"; // Jika tidak digunakan, bisa dihapus
 
-import Modal from 'react-native-modal';
 import { images } from "@/constants/images"; // Pastikan ini ada dan berisi images.kontak, images.whatsapp, images.profile
+import Modal from 'react-native-modal';
 
 import CreateClassModal from "./CreateClassModal";
 import JoinClassModal from "./JoinClassModal";
@@ -403,13 +402,14 @@ const ClassesScreen = () => {
       onPress={() =>
         router.push({ pathname: `/classes/course/[id]`, params: { id: item.id } })
       }
-      className="bg-red-100 py-6 px-4 my-2 rounded-xl shadow-sm flex-row gap-3 items-center flex-1"
+      className="bg-red-100 py-4 px-3 my-1 rounded-xl shadow-sm flex-1 min-h-[80px] justify-center"
     >
-      <Ionicons name="journal-outline" size={28} />
-      <View>
-        <Text className="text-lg font-bold text-primary">{item.title}</Text>
-        <Text className="text-xs font-bold text-primary/50">{item.title}</Text>
-
+      <View className="flex-row gap-3 items-center">
+        <Ionicons name="journal-outline" size={24} color="#dc2626" />
+        <View className="flex-1">
+          <Text className="text-base font-bold text-primary" numberOfLines={2}>{item.title}</Text>
+          <Text className="text-xs text-primary/60 mt-1">{item.semester}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -433,7 +433,6 @@ const ClassesScreen = () => {
     }
   };
 
-  // --- renderDosenItem DENGAN TOMBOL EDIT/HAPUS ---
   const renderDosenItem: ListRenderItem<Dosen> = ({ item }) => (
     <View className="w-full bg-blue-300/40 rounded-lg my-2 p-3">
       <View className="flex flex-row gap-5 items-center">
@@ -447,16 +446,17 @@ const ClassesScreen = () => {
           <View>
             <Text className="text-lg font-bold">{item.name}</Text>
             <Text className="text-sm text-gray-700">NIP: {item.nip}</Text>
-            <Text className="text-base">{item.phone_number_display}</Text>
+            {item.whats_app_number && (
+              <Text className="text-sm text-gray-700 font-semibold mt-1"> {item.whats_app_number}</Text>
+            )}
           </View>
-
           <View className="flex">
             <TouchableOpacity
-              className="flex flex-row justify-center items-center p-2 gap-2 bg-white rounded-xl"
+              className="flex flex-row justify-center items-center p-2 gap-2 bg-green-500 rounded-xl shadow-md"
               onPress={() => handleWhatsAppPress(item.whats_app_number || '')}
             >
-              <Image source={images.whatsapp} className="h-4 w-4" />
-              <Text className="text-blue-600 font-semibold">Message via WhatsApp</Text>
+              <Image source={images.whatsapp} className="h-5 w-5" />
+              <Text className="text-white font-bold">Chat WhatsApp</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -484,29 +484,27 @@ const ClassesScreen = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <View className="px-6 flex-1">
+      <View className="flex-1">
         {loading ? (
           <View className="flex-1 justify-center items-center">
             <ActivityIndicator size="large" />
           </View>
         ) : classData ? (
-          <>
+          <View className="flex-1">
             {/* Class Info */}
-            <View className="flex-row gap-10 w-full mt-10 items-center">
-              <Image source={images.kelas1} className="h-32 w-32" resizeMode="contain" />
-              <View className="flex-1 justify-between">
-                <View>
-                  <Text className="text-2xl font-bold">{classData.name}</Text>
-                  <Text className="text-primary/60 text-md mt-2 w-full">
+            <View className="px-4">
+              <View className="flex-row gap-4 w-full mt-4 items-center">
+                <Image source={images.kelas1} className="h-24 w-24" resizeMode="contain" />
+                <View className="flex-1">
+                  <Text className="text-xl font-bold">{classData.name}</Text>
+                  <Text className="text-primary/60 text-sm mt-1">
                     {classData.description}
                   </Text>
+                  <Text className="text-blue-600 mt-2 font-semibold text-sm">
+                    Peran Anda: {classData.role === "admin" ? "Admin" : "Anggota"}
+                  </Text>
                 </View>
-                <Text className="text-blue-600 mt-2 font-semibold">
-                  Peran Anda: {classData.role === "admin" ? "Admin" : "Anggota"}
-                </Text>
               </View>
-            </View>
-            <View className="mt-2 rounded-lg mb-4">
 
               {classData.role === "admin" && (
                 <View className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200 flex-row justify-between items-center">
@@ -534,78 +532,56 @@ const ClassesScreen = () => {
                   Keluar dari Kelas
                 </Text>
               </TouchableOpacity>
-            </View>
 
-            {/* Tombol Daftar Dosen (Sekarang ini yang utama) */}
-            <View className="flex mb-4">
-              <Text className="text-md font-bold mb-2">
-                More Detail :
-              </Text>
-              <View className="flex-row flex-wrap justify-between gap-x-3 gap-y-3">
-                <TouchableOpacity
-                className="items-center"
-                  onPress={() => {
-                    if (classData && classData.id) {
-                      fetchDosenList(classData.id); // Pastikan fetch dengan classId
-                    }
-                    setModalDosen(true); // Buka modal daftar dosen
-                  }}>
+              {/* More Detail Section */}
+              <View className="mt-6">
+                <Text className="text-md font-bold mb-3">
+                  More Detail :
+                </Text>
+                <View className="flex-row flex-wrap justify-between gap-3">
+                  <TouchableOpacity
+                    className="items-center"
+                    onPress={() => {
+                      if (classData && classData.id) {
+                        fetchDosenList(classData.id);
+                      }
+                      setModalDosen(true);
+                    }}
+                  >
                     <View className="rounded-lg justify-center items-center p-3 bg-green-500" style={{ width: itemWidth, height: itemWidth }}>
-
+                      <Ionicons name="people" size={24} color="white" />
                     </View>
                     <Text className="text-black text-xs mt-2">Data Dosen</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                className="items-center"
-                >
-                    <View className="rounded-lg justify-center items-center p-3 bg-green-500" style={{ width: itemWidth, height: itemWidth }}>
-
+                  </TouchableOpacity>
+                  <TouchableOpacity className="items-center">
+                    <View className="rounded-lg justify-center items-center p-3 bg-blue-500" style={{ width: itemWidth, height: itemWidth }}>
+                      <Ionicons name="document-text" size={24} color="white" />
                     </View>
                     <Text className="text-black text-xs mt-2">Dokumentasi</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                className="items-center"
-                >
-                    <View className="rounded-lg justify-center items-center p-3 bg-green-500" style={{ width: itemWidth, height: itemWidth }}>
-
+                  </TouchableOpacity>
+                  <TouchableOpacity className="items-center">
+                    <View className="rounded-lg justify-center items-center p-3 bg-yellow-500" style={{ width: itemWidth, height: itemWidth }}>
+                      <Ionicons name="wallet" size={24} color="white" />
                     </View>
                     <Text className="text-black text-xs mt-2">Keuangan</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                className="items-center"
-                >
-                    <View className="rounded-lg justify-center items-center p-3 bg-green-500" style={{ width: itemWidth, height: itemWidth }}>
-
+                  </TouchableOpacity>
+                  <TouchableOpacity className="items-center">
+                    <View className="rounded-lg justify-center items-center p-3 bg-purple-500" style={{ width: itemWidth, height: itemWidth }}>
+                      <Ionicons name="school" size={24} color="white" />
                     </View>
                     <Text className="text-black text-xs mt-2">Data Mahasiswa</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                className="items-center"
-                >
-                    <View className="rounded-lg justify-center items-center p-3 bg-green-500" style={{ width: itemWidth, height: itemWidth }}>
-
-                    </View>
-                    <Text className="text-black text-xs mt-2">Daftar Dosen</Text>
-                </TouchableOpacity>
-
-
+                  </TouchableOpacity>
+                </View>
               </View>
-                {/* Tombol Tambah Dosen DI SINI (jika tidak ingin di dalam modal Daftar Dosen) */}
-                {/* {classData.role === "admin" && (
-                    <TouchableOpacity className="h-12 bg-blue-500 px-4 rounded-lg justify-center items-center" onPress={() => {setEditingDosenId(null); setShowAddEditDosenModal(true)}}>
-                        <Text className="text-white font-semibold">Tambah Dosen</Text>
-                    </TouchableOpacity>
-                )} */}
             </View>
 
-
             {/* Dropdown Semester */}
-            <View className="my-2">
-              <Text className="text-md font-bold mb-2">
+            <View className="px-4 my-4">
+              <Text className="text-md font-bold mb-3">
                 Mata Kuliah:
               </Text>
 
-              <View className="flex-row items-center space-x-2">
+              <View className="flex-row items-center gap-3">
                 {/* Picker */}
                 <View className="flex-1 bg-white rounded-lg border border-gray-300 overflow-hidden">
                   <Picker
@@ -622,7 +598,7 @@ const ClassesScreen = () => {
                 {/* Tombol ➕ muncul hanya untuk admin */}
                 {classData.role === "admin" && (
                   <TouchableOpacity
-                    className="bg-blue-500 w-12 h-12 rounded-full justify-center items-center shadow ml-5"
+                    className="bg-blue-500 w-12 h-12 rounded-full justify-center items-center shadow"
                     onPress={() => setModalBuatMakul(true)}
                   >
                     <Ionicons name="add" size={24} color="white" />
@@ -632,66 +608,28 @@ const ClassesScreen = () => {
             </View>
 
             {/* Course List */}
-            {courseLoading ? (
-              <ActivityIndicator style={{ marginTop: 20 }} />
-            ) : (
-              <View className="flex-1">
+            <View className="flex-1 px-4">
+              {courseLoading ? (
+                <ActivityIndicator style={{ marginTop: 20 }} />
+              ) : (
                 <FlatList
                   data={courses}
                   keyExtractor={(item) => item.id.toString()}
                   renderItem={renderClassItem}
                   numColumns={2}
                   columnWrapperStyle={{ gap: 12 }}
+                  contentContainerStyle={{ paddingBottom: 80 }}
                   ListEmptyComponent={
                     <View className="items-center mt-10">
                       <Text>Belum ada mata kuliah.</Text>
                     </View>
                   }
                 />
-              </View>
-            )}
-
-            <Modal isVisible={modalBuatMakul}>
-              <View className="bg-white p-6 rounded-lg">
-                <Text className="text-lg font-semibold mb-2">Nama Mata Kuliah</Text>
-                <TextInput
-                  value={title}
-                  onChangeText={setTitle}
-                  placeholder="Contoh: Aljabar Linear"
-                  className="bg-white p-4 rounded-lg text-base border border-gray-300"
-                />
-
-                <Text className="text-lg font-semibold mt-4 mb-2">Semester</Text>
-                <View className="bg-white border border-gray-300 rounded-lg p-4">
-                  <Text>{selectedSemester}</Text>
-                </View>
-
-                <TouchableOpacity
-                  onPress={handleCreateCourse}
-                  className="bg-blue-500 p-4 rounded-lg items-center mt-6"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="white" />
-                  ) : (
-                    <Text className="text-white font-bold text-lg">Tambah</Text>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => setModalBuatMakul(false)}
-                  className="bg-gray-300 p-4 rounded-lg items-center mt-2"
-                  disabled={loading}
-                >
-                  <Text className="text-black font-bold text-lg">Batal</Text>
-                </TouchableOpacity>
-              </View>
-            </Modal>
-
-          </>
-
+              )}
+            </View>
+          </View>
         ) : (
-          <View className="flex-1 justify-center items-center ">
+          <View className="flex-1 justify-center items-center px-6">
             <Image source={images.kelas} className="h-48" resizeMode="contain" />
             <Text className="text-3xl font-bold mt-5 text-center">
               Belum Gabung Kelas
@@ -699,34 +637,73 @@ const ClassesScreen = () => {
             <Text className="text-base text-gray-600 text-center mb-10">
               Buat atau gabung ke kelas terlebih dahulu.
             </Text>
-            <TouchableOpacity className="bg-primary p-4 rounded-lg items-center w-full mb-2" onPress={() => setModalBuatKelas(true)}>
+            <TouchableOpacity className="bg-primary py-4 px-8 rounded-lg items-center max-w-xs w-full mb-3" onPress={() => setModalBuatKelas(true)}>
               <Text className="text-white font-bold text-lg">
                 Buat Kelas Baru
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity className="bg-gray-100 border border-primary/20 p-4 rounded-lg items-center w-full" onPress={() => setModalGabungKelas(true)}>
+            <TouchableOpacity className="bg-gray-100 border border-primary/20 py-4 px-8 rounded-lg items-center max-w-xs w-full" onPress={() => setModalGabungKelas(true)}>
               <Text className="text-black font-bold text-lg">
                 Gabung Kelas
               </Text>
             </TouchableOpacity>
-            <CreateClassModal
-              isVisible={modalBuatKelas} // Kontrol visibilitas
-              onClose={() => setModalBuatKelas(false)} // Fungsi untuk menutup
-              onClassCreated={() => {
-                setModalBuatKelas(false);
-                fetchUserClass(selectedSemester); // Refresh data setelah berhasil membuat kelas
-              }}
-            />
-            <JoinClassModal
-              isVisible={modalGabungKelas} // Kontrol visibilitas
-              onClose={() => setModalGabungKelas(false)} // Fungsi untuk menutup
-              onClassJoined={() => {
-                setModalGabungKelas(false);
-                fetchUserClass(selectedSemester); // Refresh data setelah berhasil gabung kelas
-              }}
-            />
           </View>
         )}
+
+        {/* Modals */}
+        <CreateClassModal
+          isVisible={modalBuatKelas}
+          onClose={() => setModalBuatKelas(false)}
+          onClassCreated={() => {
+            setModalBuatKelas(false);
+            fetchUserClass(selectedSemester);
+          }}
+        />
+        <JoinClassModal
+          isVisible={modalGabungKelas}
+          onClose={() => setModalGabungKelas(false)}
+          onClassJoined={() => {
+            setModalGabungKelas(false);
+            fetchUserClass(selectedSemester);
+          }}
+        />
+        
+        <Modal isVisible={modalBuatMakul}>
+          <View className="bg-white p-6 rounded-lg">
+            <Text className="text-lg font-semibold mb-2">Nama Mata Kuliah</Text>
+            <TextInput
+              value={title}
+              onChangeText={setTitle}
+              placeholder="Contoh: Aljabar Linear"
+              className="bg-white p-4 rounded-lg text-base border border-gray-300"
+            />
+
+            <Text className="text-lg font-semibold mt-4 mb-2">Semester</Text>
+            <View className="bg-white border border-gray-300 rounded-lg p-4">
+              <Text>{selectedSemester}</Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={handleCreateCourse}
+              className="bg-blue-500 p-4 rounded-lg items-center mt-6"
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white font-bold text-lg">Tambah</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setModalBuatMakul(false)}
+              className="bg-gray-300 p-4 rounded-lg items-center mt-2"
+              disabled={loading}
+            >
+              <Text className="text-black font-bold text-lg">Batal</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
 
         {/* Modal Daftar Dosen */}
         <Modal isVisible={modalDosen} style={{ margin: 0, justifyContent: 'center', alignItems: 'center' }}>
@@ -742,7 +719,7 @@ const ClassesScreen = () => {
           }} className="shadow-lg">
             <Image
               source={images.kontak}
-              className="absolute -top-10 left-1/2 -translate-x-1/2 w-36 h-36" // -translate-x-1/2 will be added via style
+              className="absolute -top-10 left-1/2 -translate-x-1/2 w-36 h-36"
             />
 
             <View className="flex-row justify-between items-center mb-4">
@@ -750,8 +727,8 @@ const ClassesScreen = () => {
               {classData?.role === "admin" && (
                   <TouchableOpacity
                     onPress={() => {
-                      setEditingDosenId(null); // Reset untuk mode tambah
-                      setShowAddEditDosenModal(true); // Buka modal tambah/edit
+                      setEditingDosenId(null);
+                      setShowAddEditDosenModal(true);
                     }}
                     className="p-2 bg-blue-500 rounded-full"
                   >
@@ -767,7 +744,7 @@ const ClassesScreen = () => {
                     data={dosenList}
                     keyExtractor={(item) => item.id}
                     renderItem={renderDosenItem}
-                    contentContainerStyle={{ paddingVertical: 10 }}
+                    contentContainerStyle={{ paddingVertical: 10, paddingBottom: 20 }}
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
                         <View style={{ alignItems: 'center', marginTop: 20 }}>
@@ -786,10 +763,10 @@ const ClassesScreen = () => {
           </View>
         </Modal>
 
-        {/* Modal Tambah/Edit Dosen (BARU) */}
+        {/* Modal Tambah/Edit Dosen */}
         <Modal
           isVisible={showAddEditDosenModal}
-          onBackdropPress={() => setShowAddEditDosenModal(false)} // Tutup saat klik di luar
+          onBackdropPress={() => setShowAddEditDosenModal(false)}
           style={{ margin: 0, justifyContent: 'center', alignItems: 'center' }}
         >
             <View style={{
@@ -800,7 +777,7 @@ const ClassesScreen = () => {
                 maxHeight: screenHeight * 0.7,
             }} className="shadow-lg">
                 <Text className="text-xl font-bold mb-4 text-center">
-                  {editingDosenId ? "Edit Dosen" : "Tambah Dosen Baru"} {/* Judul dinamis */}
+                  {editingDosenId ? "Edit Dosen" : "Tambah Dosen Baru"}
                 </Text>
 
                 <TextInput
@@ -815,13 +792,6 @@ const ClassesScreen = () => {
                     value={newDosenNip}
                     onChangeText={setNewDosenNip}
                     keyboardType="numeric"
-                />
-                <TextInput
-                    className="bg-white p-3 rounded-lg mb-3 text-base border border-gray-300"
-                    placeholder="Nomor Telepon (Display)"
-                    value={newDosenPhoneDisplay}
-                    onChangeText={setNewDosenPhoneDisplay}
-                    keyboardType="phone-pad"
                 />
                 <TextInput
                     className="bg-white p-3 rounded-lg mb-3 text-base border border-gray-300"
@@ -840,7 +810,7 @@ const ClassesScreen = () => {
 
                 <TouchableOpacity
                     className={`py-3 rounded-lg ${saveDosenLoading ? "bg-gray-400" : "bg-blue-600"} justify-center items-center mb-2`}
-                    onPress={handleSaveDosen} // Panggil handleSaveDosen
+                    onPress={handleSaveDosen}
                     disabled={saveDosenLoading}
                 >
                     <Text className="text-white font-semibold text-lg">
@@ -852,7 +822,7 @@ const ClassesScreen = () => {
                     className="py-3 bg-gray-200 rounded-lg justify-center items-center"
                     onPress={() => {
                         setShowAddEditDosenModal(false);
-                        setEditingDosenId(null); // Pastikan mode edit direset saat batal
+                        setEditingDosenId(null);
                     }}
                     disabled={saveDosenLoading}
                 >
@@ -860,7 +830,6 @@ const ClassesScreen = () => {
                 </TouchableOpacity>
             </View>
         </Modal>
-
       </View>
     </SafeAreaView>
   );

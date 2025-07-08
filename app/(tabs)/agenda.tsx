@@ -119,7 +119,7 @@ const CalendarScreen = () => {
       {/* Tombol Tambah Acara */}
       <Link href="/add-agenda" asChild>
         <TouchableOpacity 
-          className="absolute bottom-6 right-6 bg-blue-500 w-16 h-16 rounded-full justify-center items-center shadow-lg"
+          className="absolute bottom-20 right-6 bg-blue-500 w-16 h-16 rounded-full justify-center items-center shadow-lg"
         >
           <Ionicons name="add" size={32} color="white" />
         </TouchableOpacity>

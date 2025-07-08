@@ -56,7 +56,7 @@ const FeedScreen = () => {
         renderItem={renderPostItem}
         onRefresh={fetchPosts}
         refreshing={loading}
-        contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 8 }}
+        contentContainerStyle={{ paddingVertical: 10, paddingHorizontal: 8, paddingBottom: 80 }}
         ListEmptyComponent={
           <View className="flex-1 justify-center items-center mt-20">
             <Text className="text-gray-500">Belum ada postingan.</Text>

@@ -19,6 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/Auth';
 import { icons } from '@/constants/icons';
 import { images } from '@/constants/images';
+import { geminiAPI } from '@/services/geminiAPI';
 
 // Tipe untuk setiap item dalam to-do list
 interface TodoItem {
@@ -28,38 +29,48 @@ interface TodoItem {
   details?: string | null;
 }
 
+// Tipe untuk study plan
+interface StudyPlan {
+  id: number;
+  topic: string;
+  created_at: string;
+  user_id: string;
+}
+
 const StudyPlannerScreen = () => {
   const [topic, setTopic] = useState('');
   const [plan, setPlan] = useState<TodoItem[]>([]);
-  const [currentPlanId, setCurrentPlanId] = useState<number | null>(null);
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingDetailsId, setLoadingDetailsId] = useState<string | null>(null);
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+  
+  // State baru untuk multiple planner
+  const [studyPlans, setStudyPlans] = useState<StudyPlan[]>([]);
+  
   const { session } = useAuth();
-    const username = session?.user?.user_metadata?.username || 'Guest';
-  const capitalizedUsername = username.charAt(0).toUpperCase() + username.slice(1);
+  const username = session?.user?.user_metadata?.username || 'Guest';
+  const capitalizedUsername = username.charAt(0).toUpperCase() + username.slice(1);
 
   const progress = plan.length > 0
     ? Math.round((plan.filter(item => item.is_completed).length / plan.length) * 100)
     : 0;
 
-  // Fungsi untuk memuat rencana yang sudah ada
-  const loadExistingPlan = useCallback(async () => {
+  // Fungsi untuk memuat semua study plans
+  const loadAllPlans = useCallback(async () => {
     if (!session?.user) { setLoading(false); return; }
     setLoading(true);
 
-    const { data: planData } = await supabase
+    const { data: plansData } = await supabase
         .from('study_plans')
-        .select('id, topic')
+        .select('*')
         .eq('user_id', session.user.id)
-        .single();
+        .order('created_at', { ascending: false });
     
-    if (planData) {
-      setTopic(planData.topic);
-      setCurrentPlanId(planData.id);
-      const { data: itemsData } = await supabase.from('study_plan_items').select('*').eq('plan_id', planData.id).order('item_order', { ascending: true });
-      if (itemsData) setPlan(itemsData.map(item => ({ ...item, id: item.id.toString(), is_completed: item.completed })));
+    if (plansData && plansData.length > 0) {
+      setStudyPlans(plansData);
     } else {
+      setStudyPlans([]);
       setPlan([]);
       setTopic('');
       setCurrentPlanId(null);
@@ -67,45 +78,65 @@ const StudyPlannerScreen = () => {
     setLoading(false);
   }, [session]);
 
-  useFocusEffect(
-      useCallback(() => {
-          loadExistingPlan();
-      },[loadExistingPlan])
-  );
+  // Fungsi untuk memuat plan spesifik
+  const loadSpecificPlan = async (planId: string | number) => {
+    const numericPlanId = typeof planId === 'string' ? parseInt(planId) : planId;
+    const plan = studyPlans.find(p => p.id === numericPlanId) || 
+                 (await supabase.from('study_plans').select('*').eq('id', numericPlanId).single()).data;
+    
+    if (plan) {
+      setTopic(plan.topic);
+      setCurrentPlanId(plan.id.toString());
+      const { data: itemsData } = await supabase
+        .from('study_plan_items')
+        .select('*')
+        .eq('plan_id', plan.id)
+        .order('item_order', { ascending: true });
+      
+      if (itemsData) {
+        setPlan(itemsData.map(item => ({ 
+          ...item, 
+          id: item.id.toString(), 
+          is_completed: item.completed 
+        })));
+      }
+    }
+  };
 
-  // Fungsi untuk membuat rencana baru
+  useFocusEffect(
+       useCallback(() => {
+           loadAllPlans();
+       },[loadAllPlans])
+   );
+
+
+
+  // Fungsi untuk membuat rencana baru (untuk backward compatibility)
   const handleGeneratePlan = async () => {
     if (topic.trim().length === 0 || !session?.user) return Alert.alert("Input Kosong", "Silakan masukkan topik.");
     setLoading(true);
     setPlan([]);
-    if (currentPlanId) await supabase.from('study_plans').delete().eq('id', currentPlanId);
-
-    const geminiApiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
-    const prompt = `Anda adalah ahli kurikulum. Buatkan roadmap belajar untuk topik: "${topic}". Balas HANYA dengan array JSON dari string. Jangan gunakan format markdown seperti **. Contoh: ["Langkah 1", "Langkah 2"]`;
-    const payload = { contents: [{ parts: [{ text: prompt }] }] };
 
     try {
-      const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      const data = await response.json();
-      const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!responseText) throw new Error("Respons dari AI tidak valid.");
-
-      const cleanedText = responseText.replace(/```json\n|```/g, '').trim();
-      const parsedTasks: string[] = JSON.parse(cleanedText);
+      // Menggunakan service Gemini API yang baru
+      const parsedTasks = await geminiAPI.generateStudyPlan(topic);
 
       const { data: newPlan, error: planError } = await supabase.from('study_plans').insert({ user_id: session.user.id, topic: topic }).select().single();
       if (planError) throw planError;
-      setCurrentPlanId(newPlan.id);
+      setCurrentPlanId(newPlan.id.toString());
 
       const itemsToInsert = parsedTasks.map((task, index) => ({ plan_id: newPlan.id, task: task.replace(/\*\*/g, ''), item_order: index }));
       const { data: newItems, error: itemsError } = await supabase.from('study_plan_items').insert(itemsToInsert).select();
       if (itemsError) throw itemsError;
       setPlan(newItems.map(item => ({...item, id: item.id.toString(), is_completed: item.completed })));
+      
+      // Update study plans list
+      setStudyPlans(prev => [newPlan, ...prev]);
+      
     } catch (error) {
       console.error("Error generating plan:", error);
       Alert.alert("Error", "Gagal membuat rencana belajar. Coba lagi.");
-      loadExistingPlan(); // Kembali ke state awal jika gagal
+      loadAllPlans(); // Kembali ke state awal jika gagal
     } finally {
       setLoading(false);
     }
@@ -117,23 +148,10 @@ const handleFetchDetails = async (item: TodoItem) => {
   if (item.details) { setExpandedItemId(item.id); return; }
 
   setLoadingDetailsId(item.id);
-  const geminiApiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
-  
-  // --- PROMPT YANG LEBIH BAIK DI SINI ---
-  const prompt = `Anda adalah seorang mentor belajar yang memberikan bimbingan singkat dan efektif.
-  Jelaskan secara ringkas, jelas, dan fokus pada poin-poin penting untuk langkah belajar: "${item.task}", dalam konteks topik "${topic}".
-  Berikan penjelasan dalam 2 hingga 3 kalimat yang informatif.
-  Jangan gunakan format markdown seperti **bold**, *italic*, list (*), atau simbol lainnya.`;
-  // --- AKHIR PROMPT YANG LEBIH BAIK ---
-
-  const payload = { contents: [{ parts: [{ text: prompt }] }] };
 
   try {
-    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    const data = await response.json();
-    // Menghapus markdown jika masih ada, dan juga membersihkan spasi ekstra
-    const detailsText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim().replace(/\*\*/g, '').replace(/\*/g, '').replace(/^- /gm, ''); 
+    // Menggunakan service Gemini API yang baru
+    const detailsText = await geminiAPI.generateTaskDetails(item.task, topic);
     
     if (detailsText) {
       await supabase.from('study_plan_items').update({ details: detailsText }).eq('id', item.id);
@@ -161,15 +179,58 @@ const handleFetchDetails = async (item: TodoItem) => {
       .eq('id', item.id);
   };
   
-  // Fungsi untuk menghapus rencana belajar
-  const handleDeletePlan = () => {
-    Alert.alert("Hapus Rencana", "Apakah Anda yakin ingin menghapus rencana belajar ini dan memulai dari awal?", [
-      { text: "Batal", style: 'cancel' },
-      { text: "Hapus", style: 'destructive', onPress: async () => {
-        if(currentPlanId) await supabase.from('study_plans').delete().eq('id', currentPlanId);
-        loadExistingPlan(); // Muat ulang, akan menampilkan halaman input
-      }},
-    ]);
+  // Fungsi untuk memilih plan dari list
+  const handleSelectPlan = async (planId: string) => {
+    await loadSpecificPlan(planId);
+  };
+
+  // Fungsi untuk menghapus rencana
+  const handleDeletePlan = async (planId?: string) => {
+    const targetPlanId = planId || currentPlanId;
+    if (!targetPlanId || !session?.user) return;
+    
+    Alert.alert(
+      "Konfirmasi Hapus",
+      "Apakah Anda yakin ingin menghapus rencana belajar ini?",
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Hapus",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const { error } = await supabase
+                .from('study_plans')
+                .delete()
+                .eq('id', targetPlanId)
+                .eq('user_id', session.user.id);
+              
+              if (error) throw error;
+              
+              // Update study plans list
+              setStudyPlans(prev => prev.filter(plan => plan.id.toString() !== targetPlanId));
+              
+              // If deleting current plan, reset or load another plan
+              if (targetPlanId === currentPlanId) {
+                const remainingPlans = studyPlans.filter(plan => plan.id.toString() !== targetPlanId);
+                if (remainingPlans.length > 0) {
+                  await loadSpecificPlan(remainingPlans[0].id);
+                } else {
+                  setPlan([]);
+                  setTopic('');
+                  setCurrentPlanId(null);
+                }
+              }
+              
+              Alert.alert("Berhasil", "Rencana belajar telah dihapus.");
+            } catch (error) {
+              console.error("Error deleting plan:", error);
+              Alert.alert("Error", "Gagal menghapus rencana belajar.");
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderRoadmapItem: ListRenderItem<TodoItem> = ({ item }) => (
@@ -199,16 +260,35 @@ const handleFetchDetails = async (item: TodoItem) => {
       {currentPlanId ? (
         // Tampilan Roadmap jika sudah ada rencana
         <View className="flex-1">
-          <View className="px-6 py-4  bg-white">
+          <View className="px-6 py-4 bg-white">
             <View className='bg-blue-50 p-4 rounded-xl'>
               <View className="flex-row justify-between items-start">
-                  <View className="flex-1">
+                  <TouchableOpacity 
+                    onPress={() => {
+                      setPlan([]);
+                      setTopic('');
+                      setCurrentPlanId(null);
+                    }} 
+                    className="p-2 -ml-2"
+                  >
+                    <Ionicons name="arrow-back" size={24} color="#10B981"/>
+                  </TouchableOpacity>
+                  <View className="flex-1 mx-3">
                       <Text className="text-xs text-gray-500">Rencana Belajar Anda</Text>
                       <Text className="text-2xl font-bold" numberOfLines={1}>{topic}</Text>
                   </View>
-                  <TouchableOpacity onPress={handleDeletePlan} className="p-2 -mr-2">
-                      <Ionicons name="trash-outline" size={24} color="red"/>
-                  </TouchableOpacity>
+                  <View className="flex-row gap-2">
+                    <TouchableOpacity onPress={() => {
+                      setPlan([]);
+                      setTopic('');
+                      setCurrentPlanId(null);
+                    }} className="p-2">
+                        <Ionicons name="add-outline" size={24} color="#10B981"/>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleDeletePlan()} className="p-2">
+                        <Ionicons name="trash-outline" size={24} color="red"/>
+                    </TouchableOpacity>
+                  </View>
               </View>
               <Text className="text-base font-semibold text-gray-700 mt-4">Progress</Text>
               <View className="w-full h-3 bg-white rounded-full overflow-hidden mt-2">
@@ -217,29 +297,73 @@ const handleFetchDetails = async (item: TodoItem) => {
               <Text className="text-right text-sm text-gray-500 mt-1">{progress}% Selesai</Text>
             </View>
           </View>
-          <FlatList data={plan} keyExtractor={(item) => item.id} renderItem={renderRoadmapItem} contentContainerStyle={{ paddingVertical: 8 }}/>
+          <FlatList data={plan} keyExtractor={(item) => item.id} renderItem={renderRoadmapItem} contentContainerStyle={{ paddingVertical: 8, paddingBottom: 80 }}/>
         </View>
       ) : (
-        // Tampilan Input jika belum ada rencana
-        <View className="flex-1 items-center justify-center p-6">
-          <Image source={images.aiplanner} className='h-60' resizeMode='contain' />
-          <Text className="text-3xl font-bold text-primary my-4 text-center">Bingung belajar mulai dari mana?</Text>
-          <Text className="text-base text-center text-gray-500 mb-6">Masukkan topik atau tujuan belajar Anda, dan biarkan AI menyusun roadmap langkah demi langkah untuk Anda.</Text>
-          <TextInput
-            placeholder="Contoh: Belajar Web Development"
-            value={topic}
-            onChangeText={setTopic}
-            className="w-full bg-gray-100 p-4 rounded-lg text-base mb-10 border border-gray-300"
-          />
-          <TouchableOpacity 
-            onPress={handleGeneratePlan} 
-            className="bg-primary w-full py-4 rounded-lg items-center shadow"
-            disabled={loading}
-          >
-            <Text className="text-white font-semibold text-lg">Buat Rencana Belajar</Text>
-          </TouchableOpacity>
+        // Tampilan Input dan Daftar Study Plans
+        <View className="flex-1">
+          {/* Form Input */}
+          <View className="items-center justify-center p-6">
+            <Image source={images.aiplanner} className='h-60' resizeMode='contain' />
+            <Text className="text-3xl font-bold text-primary my-4 text-center">Bingung belajar mulai dari mana?</Text>
+            <Text className="text-base text-center text-gray-500 mb-6">Masukkan topik atau tujuan belajar Anda, dan biarkan AI menyusun roadmap langkah demi langkah untuk Anda.</Text>
+            <TextInput
+              placeholder="Contoh: Belajar Web Development"
+              value={topic}
+              onChangeText={setTopic}
+              className="w-full bg-gray-100 p-4 rounded-lg text-base mb-6 border border-gray-300"
+            />
+            <TouchableOpacity 
+              onPress={handleGeneratePlan} 
+              className="bg-primary w-full py-4 rounded-lg items-center shadow"
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white font-semibold text-lg">Buat Rencana Belajar</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+          
+          {/* Study Plans List - Only show if there are saved plans */}
+          {studyPlans.length > 0 && (
+            <View className="px-6 pb-6">
+              <Text className="text-xl font-bold text-primary mb-4">Study Plans Tersimpan</Text>
+              <FlatList
+                data={studyPlans}
+                keyExtractor={(item) => item.id.toString()}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => handleSelectPlan(item.id.toString())}
+                    className="p-4 mb-3 rounded-xl border bg-gray-50 border-gray-200"
+                  >
+                    <View className="flex-row justify-between items-start">
+                      <View className="flex-1">
+                        <Text className="text-lg font-semibold text-gray-800" numberOfLines={2}>
+                          {item.topic}
+                        </Text>
+                        <Text className="text-sm text-gray-500 mt-1">
+                          Dibuat: {new Date(item.created_at).toLocaleDateString('id-ID')}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => handleDeletePlan(item.id.toString())}
+                        className="p-2 -mr-2"
+                      >
+                        <Ionicons name="trash-outline" size={20} color="red" />
+                      </TouchableOpacity>
+                    </View>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          )}
         </View>
       )}
+
+
     </SafeAreaView>
   );
 };

@@ -102,11 +102,12 @@ const PostDetailScreen = () => {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
-        keyboardVerticalOffset={90}
+        keyboardVerticalOffset={160}
       >
         <FlatList
           data={comments}
           keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={{ paddingBottom: 80 }}
           ListHeaderComponent={
             <View className="p-2">
               {/* ✅ DI SINI KITA MENAMBAHKAN PROP isDetailPage */}
