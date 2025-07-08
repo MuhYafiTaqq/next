@@ -618,7 +618,7 @@ const ClassesScreen = () => {
                   renderItem={renderClassItem}
                   numColumns={2}
                   columnWrapperStyle={{ gap: 12 }}
-                  contentContainerStyle={{ paddingBottom: 80 }}
+                  contentContainerStyle={{ paddingBottom: 50 }}
                   ListEmptyComponent={
                     <View className="items-center mt-10">
                       <Text>Belum ada mata kuliah.</Text>
@@ -744,7 +744,7 @@ const ClassesScreen = () => {
                     data={dosenList}
                     keyExtractor={(item) => item.id}
                     renderItem={renderDosenItem}
-                    contentContainerStyle={{ paddingVertical: 10, paddingBottom: 20 }}
+                    contentContainerStyle={{ paddingVertical: 10, paddingBottom: 50 }}
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
                         <View style={{ alignItems: 'center', marginTop: 20 }}>

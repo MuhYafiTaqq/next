@@ -19,7 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/Auth';
 import { icons } from '@/constants/icons';
 import { images } from '@/constants/images';
-import { geminiAPI } from '@/services/geminiAPI';
+import { aiAPI } from '@/services/geminiAPI';
 
 // Tipe untuk setiap item dalam to-do list
 interface TodoItem {
@@ -118,8 +118,8 @@ const StudyPlannerScreen = () => {
     setPlan([]);
 
     try {
-      // Menggunakan service Gemini API yang baru
-      const parsedTasks = await geminiAPI.generateStudyPlan(topic);
+      // Menggunakan service AI API yang baru
+      const parsedTasks = await aiAPI.generateStudyPlan(topic);
 
       const { data: newPlan, error: planError } = await supabase.from('study_plans').insert({ user_id: session.user.id, topic: topic }).select().single();
       if (planError) throw planError;
@@ -150,8 +150,8 @@ const handleFetchDetails = async (item: TodoItem) => {
   setLoadingDetailsId(item.id);
 
   try {
-    // Menggunakan service Gemini API yang baru
-    const detailsText = await geminiAPI.generateTaskDetails(item.task, topic);
+    // Menggunakan service AI API yang baru
+    const detailsText = await aiAPI.generateTaskDetails(item.task, topic);
     
     if (detailsText) {
       await supabase.from('study_plan_items').update({ details: detailsText }).eq('id', item.id);
@@ -297,7 +297,7 @@ const handleFetchDetails = async (item: TodoItem) => {
               <Text className="text-right text-sm text-gray-500 mt-1">{progress}% Selesai</Text>
             </View>
           </View>
-          <FlatList data={plan} keyExtractor={(item) => item.id} renderItem={renderRoadmapItem} contentContainerStyle={{ paddingVertical: 8, paddingBottom: 80 }}/>
+          <FlatList data={plan} keyExtractor={(item) => item.id} renderItem={renderRoadmapItem} contentContainerStyle={{ paddingVertical: 8, paddingBottom: 50 }}/>
         </View>
       ) : (
         // Tampilan Input dan Daftar Study Plans
@@ -328,7 +328,7 @@ const handleFetchDetails = async (item: TodoItem) => {
           
           {/* Study Plans List - Only show if there are saved plans */}
           {studyPlans.length > 0 && (
-            <View className="px-6 pb-6">
+            <View className="flex-1 px-6">
               <Text className="text-xl font-bold text-primary mb-4">Study Plans Tersimpan</Text>
               <FlatList
                 data={studyPlans}
@@ -357,6 +357,7 @@ const handleFetchDetails = async (item: TodoItem) => {
                     </View>
                   </TouchableOpacity>
                 )}
+                contentContainerStyle={{ paddingBottom: 50 }}
               />
             </View>
           )}

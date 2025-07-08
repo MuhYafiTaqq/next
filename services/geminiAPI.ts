@@ -1,7 +1,7 @@
-// Gemini API Service
-// Centralized service for handling Gemini API calls
+// AI API Service
+// Centralized service for handling AI API calls
 
-interface GeminiResponse {
+interface AIResponse {
   candidates?: Array<{
     content?: {
       parts?: Array<{
@@ -11,31 +11,33 @@ interface GeminiResponse {
   }>;
 }
 
-class GeminiAPIService {
+class AIAPIService {
   private apiKey: string | undefined;
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
   constructor() {
-    this.apiKey = process.env.PUBLIC_GEMINI_API_KEY;
+    this.apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
   }
 
   private validateApiKey(): string {
-    const apiKey = process.env.PUBLIC_GEMINI_API_KEY;
+    const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error('API key Gemini tidak ditemukan. Periksa konfigurasi environment.');
+      throw new Error('API key AI tidak ditemukan. Periksa konfigurasi environment.');
     }
     return apiKey;
   }
 
-  private async makeRequest(prompt: string): Promise<string> {
+  private async makeRequest(prompt: string, retryCount = 0): Promise<string> {
     const apiKey = this.validateApiKey();
+    const maxRetries = 3;
+    const baseDelay = 2000; // 2 seconds
 
     const url = `${this.baseUrl}?key=${apiKey}`;
     const payload = {
       contents: [{ parts: [{ text: prompt }] }]
     };
 
-    console.log('🚀 Sending request to Gemini API...');
+    console.log(`🚀 Sending request to AI API... (Attempt ${retryCount + 1}/${maxRetries + 1})`);
     console.log('📍 URL:', url.replace(this.apiKey!, '[HIDDEN]'));
     console.log('📦 Payload:', JSON.stringify(payload, null, 2));
 
@@ -54,10 +56,24 @@ class GeminiAPIService {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Error response body:', errorText);
+        
+        // Handle 503 Service Unavailable with retry
+        if (response.status === 503 && retryCount < maxRetries) {
+          const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
+          console.log(`⏳ Service overloaded. Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return this.makeRequest(prompt, retryCount + 1);
+        }
+        
+        // Handle other errors or max retries reached
+        if (response.status === 503) {
+          throw new Error('Layanan AI sedang sibuk. Silakan coba lagi dalam beberapa menit.');
+        }
+        
         throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
       }
 
-      const data: GeminiResponse = await response.json();
+      const data: AIResponse = await response.json();
       console.log('✅ AI Response received:', data);
 
       const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -68,7 +84,16 @@ class GeminiAPIService {
 
       return responseText;
     } catch (error) {
-      console.error('❌ Gemini API Error:', error);
+      console.error('❌ AI API Error:', error);
+      
+      // If it's a network error and we haven't exceeded retries, try again
+      if (retryCount < maxRetries && error instanceof TypeError) {
+        const delay = baseDelay * Math.pow(2, retryCount);
+        console.log(`🔄 Network error. Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return this.makeRequest(prompt, retryCount + 1);
+      }
+      
       throw error;
     }
   }
@@ -111,5 +136,6 @@ class GeminiAPIService {
 }
 
 // Export singleton instance
-export const geminiAPI = new GeminiAPIService();
-export default geminiAPI;
+export const aiAPI = new AIAPIService();
+export const geminiAPI = aiAPI; // Backward compatibility
+export default aiAPI;

@@ -107,7 +107,7 @@ const PostDetailScreen = () => {
         <FlatList
           data={comments}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingBottom: 80 }}
+          contentContainerStyle={{ paddingBottom: 50 }}
           ListHeaderComponent={
             <View className="p-2">
               {/* ✅ DI SINI KITA MENAMBAHKAN PROP isDetailPage */}

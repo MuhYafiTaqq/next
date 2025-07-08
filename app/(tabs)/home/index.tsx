@@ -153,7 +153,7 @@ export default function Index() {
             }
             onRefresh={fetchTodos}
             refreshing={loadingTodos}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={{ paddingBottom: 50 }}
         />
     </SafeAreaView>
   );

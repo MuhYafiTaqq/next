@@ -243,7 +243,7 @@ const CourseDetailScreen = () => {
           }
           renderItem={renderSessionItem}
           ListEmptyComponent={<View className="items-center mt-4"><Text>Belum ada sesi untuk mata kuliah ini.</Text></View>}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: 50 }}
         />
       )}
 
