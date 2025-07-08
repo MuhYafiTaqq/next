@@ -157,7 +157,6 @@ const ClassesScreen = () => {
   // --- Fungsi: Fetch Daftar Dosen dari Supabase (DENGAN CLASS_ID) ---
   const fetchDosenList = useCallback(async (classId: number) => {
     if (!classId) {
-      console.log("fetchDosenList: classId is missing, skipping fetch.");
       setDosenList([]);
       setDosenListLoading(false);
       return;
@@ -174,7 +173,6 @@ const ClassesScreen = () => {
       Alert.alert('Error', 'Gagal memuat daftar dosen: ' + error.message);
       setDosenList([]);
     } else {
-      console.log('Fetched Dosen List Data:', data); // Untuk debugging
       setDosenList(data || []);
     }
     setDosenListLoading(false);
@@ -404,7 +402,7 @@ const ClassesScreen = () => {
       }
       className="bg-red-100 py-4 px-3 my-1 rounded-xl shadow-sm flex-1 min-h-[80px] justify-center"
     >
-      <View className="flex-row gap-3 items-center">
+      <View className="flex-row gap-3 items-center px-4 py-2">
         <Ionicons name="journal-outline" size={24} color="#dc2626" />
         <View className="flex-1">
           <Text className="text-base font-bold text-primary" numberOfLines={2}>{item.title}</Text>
@@ -492,9 +490,11 @@ const ClassesScreen = () => {
         ) : classData ? (
           <View className="flex-1">
             {/* Class Info */}
-            <View className="px-4">
+            <View className="px-6">
               <View className="flex-row gap-4 w-full mt-4 items-center">
-                <Image source={images.kelas1} className="h-24 w-24" resizeMode="contain" />
+                <View className="w-24 h-24 justify-center items-center">
+                  <Image source={images.kelas1} className="h-20 w-20" />
+                </View>
                 <View className="flex-1">
                   <Text className="text-xl font-bold">{classData.name}</Text>
                   <Text className="text-primary/60 text-sm mt-1">
@@ -560,7 +560,7 @@ const ClassesScreen = () => {
                     <Text className="text-black text-xs mt-2">Dokumentasi</Text>
                   </TouchableOpacity>
                   <TouchableOpacity className="items-center">
-                    <View className="rounded-lg justify-center items-center p-3 bg-yellow-500" style={{ width: itemWidth, height: itemWidth }}>
+                    <View className="rounded-lg justify-center items-center p-3 bg-yellow-300" style={{ width: itemWidth, height: itemWidth }}>
                       <Ionicons name="wallet" size={24} color="white" />
                     </View>
                     <Text className="text-black text-xs mt-2">Keuangan</Text>
@@ -576,7 +576,7 @@ const ClassesScreen = () => {
             </View>
 
             {/* Dropdown Semester */}
-            <View className="px-4 my-4">
+            <View className="px-6 my-4">
               <Text className="text-md font-bold mb-3">
                 Mata Kuliah:
               </Text>
@@ -608,7 +608,7 @@ const ClassesScreen = () => {
             </View>
 
             {/* Course List */}
-            <View className="flex-1 px-4">
+            <View className="flex-1 px-6">
               {courseLoading ? (
                 <ActivityIndicator style={{ marginTop: 20 }} />
               ) : (
