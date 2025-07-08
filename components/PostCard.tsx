@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/Auth';
 
 import { Menu, Button } from 'react-native-paper';
+import { icons } from '@/constants/icons';
 
 export interface Post {
   id: number;
@@ -131,10 +132,14 @@ const PostCard = ({ post, onUpdate, isDetailPage = false }: PostCardProps) => {
     <View className="rounded-xl mb-4 border-b border-black/20 py-6">
       <View className='flex-row justify-between'>
         <View className="flex-row items-center mb-3">
-          <Image
-            source={{ uri: avatarUrl }}
-            className="w-10 h-10 rounded-full bg-gray-200"
-          />
+          {post.is_anonymous ? (
+            <Image
+              source={{ uri: avatarUrl }}
+              className="w-10 h-10 rounded-full"
+            />
+          ) : (
+            <Image source={icons.user} className='w-10 h-10 rounded-full' />
+          )}
           <View className="ml-3 justify-center">
               <Text className="font-bold text-base">{post.author_username}</Text>
               <Text className="text-xs text-gray-500">{formatTimeAgo(post.created_at)}</Text>

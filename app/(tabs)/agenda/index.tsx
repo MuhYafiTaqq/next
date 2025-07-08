@@ -155,7 +155,7 @@ const CalendarScreen = () => {
 
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-white">
       <Calendar
         current={selectedDate}
         onDayPress={onDayPress}
@@ -172,7 +172,7 @@ const CalendarScreen = () => {
           arrowColor: 'orange',
         }}
       />
-      <View className="flex-1 p-4">
+      <View className="flex-1 p-6 mt-4">
         <Text className="text-xl font-bold mb-2">Acara pada {new Date(selectedDate).toLocaleDateString('id-ID', {dateStyle: 'long'})}</Text>
         {loading ? <ActivityIndicator/> : (
             eventsForSelectedDate.length > 0 ? (
@@ -192,7 +192,7 @@ const CalendarScreen = () => {
       </View>
 
       <TouchableOpacity
-        className="absolute bottom-20 right-6 bg-blue-500 w-16 h-16 rounded-full justify-center items-center shadow-lg"
+        className="absolute bottom-16 right-10 bg-blue-500 w-16 h-16 rounded-full justify-center items-center shadow-lg"
         onPress={() => setModalAdd(true)}
       >
         <Ionicons name="add" size={32} color="white" />
