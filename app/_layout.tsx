@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { useEffect } from 'react';
+import { SplashScreen, Stack, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '@/context/Auth';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native';
 import "./global.css";
-import { Ionicons } from '@expo/vector-icons';
-import { icons } from '@/constants/icons';
-import { supabase } from '@/lib/supabase';
 
 import { Provider as PaperProvider } from 'react-native-paper';
 
@@ -18,24 +15,18 @@ const InitialLayout = () => {
   const segments = useSegments();
   const router = useRouter();
 
-    const [menuVisible, setMenuVisible] = useState(false);
-  const username = session?.user?.user_metadata?.username || 'Guest';
-  const capitalizedUsername = username.charAt(0).toUpperCase() + username.slice(1);
-
-
-  const handleLogout = async () => {
-    setMenuVisible(false);
-    await supabase.auth.signOut();
-  };
-
   useEffect(() => {
     if (loading) return;
     const inAuthGroup = segments[0] === '(auth)';
 
     if (session && inAuthGroup) {
       router.replace('/(tabs)/home');
+      SplashScreen.hideAsync();
     } else if (!session && !inAuthGroup) {
       router.replace('/auth');
+      SplashScreen.hideAsync();
+    } else {
+      SplashScreen.hideAsync();
     }
   }, [session, loading, segments]);
 
